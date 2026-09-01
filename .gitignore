@@ -1,0 +1,4 @@
+/data
+*.drawio*
+Dockerfile
+requirements.txt
