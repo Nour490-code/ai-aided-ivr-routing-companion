@@ -14,6 +14,9 @@ services:
       - "7077:7077"
     volumes:
       - ./src:/app/src
+      - ./data:/app/data
+    networks:
+      - project_net
 
   spark-worker:
     build: .
@@ -28,6 +31,9 @@ services:
       - "8081:8081"
     volumes:
       - ./src:/app/src
+      - ./data:/app/data      
+    networks:
+      - project_net
 
   # =========================================================
   # KAFKA
@@ -52,6 +58,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    networks:
+      - project_net
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -64,6 +72,8 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - project_net
 
 
 
@@ -285,6 +295,6 @@ volumes:
 
 networks:
 
-  malware_net:
+  project_net:
     name: project_net
     driver: bridge
