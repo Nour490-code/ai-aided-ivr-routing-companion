@@ -1,3 +1,8 @@
+/data
+*.drawio*
+Dockerfile
+requirements.txt
+
 # Python-generated files
 __pycache__/
 *.py[oc]
