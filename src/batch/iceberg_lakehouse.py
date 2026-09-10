@@ -2,6 +2,10 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
 from pyspark.sql.functions import col, from_json
 
+# docker exec -it spark-master /opt/spark/bin/spark-submit \
+#   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.0,org.apache.iceberg:iceberg-aws-bundle:1.5.0,org.apache.hadoop:hadoop-aws:3.3.4 \
+#   /app/src/batch/iceberg_lakehouse.py
+
 spark = SparkSession.builder \
     .appName("Kafka-To-Iceberg-Batch-Consumer") \
     .config("spark.sql.catalog.demo", "org.apache.iceberg.spark.SparkCatalog") \
@@ -69,9 +73,3 @@ parsed_df.write \
     .save("demo.lakehouse.customer_commands_batch")
 
 print("✅ Ingestion complete: Batch data stored in Lakehouse.")
-
-
-
-# docker exec -it spark-master /opt/spark/bin/spark-submit \
-#   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.0,org.apache.iceberg:iceberg-aws-bundle:1.5.0,org.apache.hadoop:hadoop-aws:3.3.4 \
-#   /app/src/batch/iceberg_lakehouse.py
