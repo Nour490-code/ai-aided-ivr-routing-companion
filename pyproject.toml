@@ -1,0 +1,29 @@
+[project]
+name = "customer-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Zain", email = "zaintamer10@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "python-dotenv>=1.2.3",
+]
+
+[project.scripts]
+customer-service = "customer_service:main"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+preprocessing = [
+    "fastparquet>=2026.5.0",
+    "ipykernel>=7.3.0",
+    "numpy>=2.5.3",
+    "pandas>=3.0.5",
+    "pip>=26.2.1",
+    "scikit-learn>=1.9.0",
+]
