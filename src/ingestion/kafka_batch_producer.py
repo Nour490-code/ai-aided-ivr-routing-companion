@@ -1,44 +1,36 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
-from pyspark.sql.functions import col, to_json, struct
+from pyspark.sql.functions import col, to_json, struct, lit
 
 spark = SparkSession.builder \
-    .appName("CSV-Batch-Kafka-Producer") \
+    .appName("Parquet-to-Kafka-Producer-Batch") \
     .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2") \
     .getOrCreate()
 
-# Run command:
-    #  docker exec -it spark-master /opt/spark/bin/spark-submit   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2   /app/src/ingestion/kafka_batch_producer.py
+#  docker exec -it spark-master /opt/spark/bin/spark-submit   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2   /app/src/ingestion/kafka_batch_producer.py
 
-DATA_SOURCE_PATH = "/app/data/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv"
+PARQUET_SOURCE_PATH = "/app/data/test_split.parquet"
 KAFKA_BROKERS = "kafka:9092"
 BATCH_TOPIC = "customer-commands-batch"
 STREAM_TOPIC = "customer-commands-streaming"
 
-
 schema = StructType([
-    StructField("flags", StringType(), True),
     StructField("instruction", StringType(), True),
-    StructField("category", StringType(), True),
     StructField("intent", StringType(), True)
 ])
 
-raw_df = spark.read \
+# Read source Parquet file
+parquet_df = spark.read \
     .schema(schema) \
-    .option("header", "true") \
-    .option("delimiter", ",") \
-    .option("multiline", "true") \
-    .option("escape", "\"") \
-    .csv(DATA_SOURCE_PATH)
+    .parquet(PARQUET_SOURCE_PATH)
 
+print("Starting Batch Processing")
 
-print("🚀 Starting Batch Processing...")
-
-kafka_batch_df = raw_df.select(
+# Batch payload includes both instruction and intent
+kafka_batch_df = parquet_df.select(
     col("intent").cast("string").alias("key"),
-    to_json(struct("flags","instruction" ,"category")).alias("value")
+    to_json(struct("instruction", "intent")).alias("value")
 )
-
 
 kafka_batch_df.write \
     .format("kafka") \
@@ -46,4 +38,4 @@ kafka_batch_df.write \
     .option("topic", BATCH_TOPIC) \
     .save()
 
-print("✅ Batch transfer complete.")
+print("Batch transfer complete.")

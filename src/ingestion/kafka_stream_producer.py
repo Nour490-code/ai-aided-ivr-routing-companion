@@ -1,51 +1,41 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, to_json, struct, lit
+
+#  docker exec -it spark-master /opt/spark/bin/spark-submit   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2   /app/src/ingestion/kafka_stream_producer.py
 
 spark = SparkSession.builder \
-    .appName("CSV-Streaming-Kafka-Producer") \
+    .appName("Parquet-to-Kafka-Producer-Stream") \
     .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2") \
     .getOrCreate()
 
-# Run command:
-    # docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2 /app/src/ingestion/kafka_stream_producer.py
-
-DATA_SOURCE_PATH = "/app/data/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv"
-STREAMING_DATA_PATH = "/tmp/streaming-data"
+PARQUET_SOURCE_PATH = "/app/data/test_split.parquet"
+STREAMING_DATA_DIR = "/tmp/streaming-source"
 KAFKA_BROKERS = "kafka:9092"
 STREAM_TOPIC = "customer-commands-streaming"
 
 schema = StructType([
-    StructField("flags", StringType(), True),
     StructField("instruction", StringType(), True),
-    StructField("category", StringType(), True),
     StructField("intent", StringType(), True)
 ])
 
-# Read source CSV
-raw_df = spark.read \
-    .schema(schema) \
-    .option("header", "true") \
-    .option("delimiter", ",") \
-    .option("multiline", "true") \
-    .option("escape", "\"") \
-    .csv(DATA_SOURCE_PATH)
+# Dump source Parquet file into temporary directory to trigger the stream simulation
+source_df = spark.read.schema(schema).parquet(PARQUET_SOURCE_PATH)
 
-# Dump into temporary directory to trigger the stream simulation
-raw_df.write \
+source_df.write \
     .mode("overwrite") \
-    .json(STREAMING_DATA_PATH)
+    .parquet(STREAMING_DATA_DIR)
 
-print("🚀 Launching Stream Monitoring...")
+print("Launching Stream Monitoring...")
 
 raw_stream_df = spark.readStream \
     .schema(schema) \
-    .format("json") \
-    .load(STREAMING_DATA_PATH)
+    .format("parquet") \
+    .load(STREAMING_DATA_DIR)
 
 kafka_stream_df = raw_stream_df.select(
-    col("flags").cast("string").alias("key"),
-    col("instruction").cast("string").alias("value")
+    lit("unknown_intent").cast("string").alias("key"),
+    to_json(struct(col("instruction").cast("string"))).alias("value")
 )
 
 stream_query = kafka_stream_df.writeStream \
