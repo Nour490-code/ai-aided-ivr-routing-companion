@@ -1,0 +1,11 @@
+{
+  "model_name": "electra-small",
+  "source_checkpoint": "google/electra-small-discriminator",
+  "precision": "int8",
+  "model_path": "int8/model_quantized.onnx",
+  "tokenizer_path": ".",
+  "labels_path": "labels.json",
+  "max_length": 24,
+  "input": "one non-empty English customer message or a list of messages",
+  "output": "one intent label per message"
+}

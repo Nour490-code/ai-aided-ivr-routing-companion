@@ -1,4 +1,4 @@
-/data
+data/*
 *.drawio*
 Dockerfile
 requirements.txt
@@ -15,3 +15,9 @@ wheels/
 .venv
 
 .env
+
+# Keep data ignored except for the exported intent-classifier model.
+!data/models/
+data/models/*
+!data/models/intent_classifier_onnx/
+!data/models/intent_classifier_onnx/**
